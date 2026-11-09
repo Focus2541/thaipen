@@ -1,0 +1,17 @@
+{
+  "name": "ถ่ายเป็น — กล้องสอนถ่ายรูป",
+  "short_name": "ถ่ายเป็น",
+  "description": "กล้องสอนถ่ายรูปสำหรับมือใหม่ บอกวิธีจัดภาพ เลือกโทน แต่งรูปให้อัตโนมัติ",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1112",
+  "theme_color": "#0f1112",
+  "lang": "th",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

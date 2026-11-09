@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0f1112">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ถ่ายเป็น — กล้องสอนถ่ายรูป</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{--bg:#0f1112;--panel:#1d2124;--line:#30363a;--ink:#f1f3f2;--mute:#9aa4a8;--acc:#3ddc84;--warn:#ffc53d;--bad:#ff5a4e}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans Thai","Sukhumvit Set",sans-serif;overscroll-behavior:none;overflow:hidden}
+body{user-select:none;-webkit-user-select:none}
+button{font:inherit;cursor:pointer;color:inherit}
+.full{position:fixed;top:0;left:0;right:0;bottom:0}
+#app{display:flex;flex-direction:column;height:100%}
+.top{display:flex;align-items:center;padding:calc(env(safe-area-inset-top) + 8px) 10px 4px}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:7px 12px;font-size:14px;margin-right:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46%}
+.chip small{color:var(--mute);font-size:11px;margin-left:4px}
+.sp{flex:1}
+.iconbtn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:16px;padding:0;flex:none}
+.vf-wrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;padding:4px 8px}
+.vf{position:relative;overflow:hidden;border-radius:6px;background:#000;touch-action:none}
+.vf video,.vf canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+.vf video{object-fit:cover}
+#live{display:none}
+.coach{position:absolute;top:10px;left:50%;transform:translateX(-50%);max-width:92%;background:rgba(0,0,0,.62);padding:7px 14px;border-radius:18px;font-size:15px;font-weight:600;text-align:center;line-height:1.35;transition:background .3s;pointer-events:none}
+.coach.good{background:rgba(29,150,86,.85)}
+.msg{position:absolute;top:0;left:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--mute);font-size:14px;line-height:1.7;background:#000}
+.flash{position:absolute;top:0;left:0;right:0;bottom:0;background:#fff;opacity:0;pointer-events:none}
+.why{text-align:center;font-size:12px;color:var(--mute);padding:4px 10px 0;min-height:20px}
+.bottom{display:flex;align-items:center;justify-content:space-around;padding:6px 18px 2px}
+.thumb{width:54px;height:54px;border-radius:12px;border:2px solid var(--line);background:#000 center/cover no-repeat;padding:0;font-size:22px}
+.imp{width:54px;height:54px;border-radius:12px;border:1px solid var(--line);background:var(--panel);padding:0;font-size:20px;line-height:1.1}
+.imp small{display:block;font-size:10px;color:var(--mute)}
+.shwrap{position:relative;width:92px;height:92px}
+.shwrap svg{position:absolute;top:0;left:0;width:92px;height:92px;transform:rotate(-90deg)}
+.shwrap circle{fill:none;stroke-width:7}
+.shwrap .bg{stroke:#2a2f33}
+#arc{stroke:var(--bad);stroke-linecap:round;stroke-dasharray:289;stroke-dashoffset:289;transition:stroke-dashoffset .35s,stroke .35s}
+.shutter{position:absolute;top:11px;left:11px;width:70px;height:70px;border-radius:50%;border:none;background:#f1f3f2;color:#111;padding:0;font-size:22px;font-weight:800;box-shadow:0 3px 12px rgba(0,0,0,.6)}
+.shutter:active{transform:scale(.92)}
+.shutter small{display:block;font-size:9px;font-weight:600;color:#666;margin-top:-2px}
+.autosw{display:block;margin:4px auto calc(env(safe-area-inset-bottom) + 10px);background:none;border:1px solid var(--line);border-radius:16px;padding:5px 14px;font-size:12px;color:var(--mute)}
+.autosw.on{border-color:var(--acc);color:var(--acc)}
+/* screens */
+.screen{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:20;display:none;flex-direction:column}
+.screen.open{display:flex}
+.hdr{display:flex;align-items:center;padding:calc(env(safe-area-inset-top) + 8px) 10px 6px}
+.hdr b{flex:1;font-size:16px;margin-left:8px}
+.hdr .x{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--panel);font-size:16px;padding:0}
+.hdr .txtbtn{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:6px 12px;font-size:13px}
+.hdr .txtbtn.on{background:var(--acc);color:#062;border-color:var(--acc)}
+.stage{position:relative;flex:1;min-height:0;margin:0 10px;touch-action:none;overflow:hidden;border-radius:8px;background:#000}
+.stage canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+.handle{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:#fff;pointer-events:none;box-shadow:0 0 6px #000}
+.handle:after{content:'⇆';position:absolute;top:50%;left:-17px;width:34px;height:34px;margin-top:-17px;border-radius:50%;background:#fff;color:#111;font-size:18px;line-height:34px;text-align:center}
+.tag{position:absolute;top:8px;background:rgba(0,0,0,.6);font-size:12px;padding:3px 9px;border-radius:10px;pointer-events:none}
+.tag.l{left:8px}.tag.r{right:8px}
+.busy{position:absolute;top:0;left:0;right:0;bottom:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);font-size:14px;color:var(--acc)}
+.rbody{padding:8px 12px 0;max-height:46%;overflow:auto}
+.scoreline{display:flex;align-items:center;font-size:14px;margin-bottom:8px}
+.scoreline .num{font-size:20px;font-weight:800;margin:0 6px}
+.scoreline .sp{flex:1}
+.pill{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px 10px;font-size:12px;margin-left:6px}
+.chips{display:flex;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.tchip{flex:none;width:76px;margin-right:8px;background:var(--panel);border:2px solid transparent;border-radius:12px;padding:6px 4px;font-size:11px;text-align:center;position:relative}
+.tchip.on{border-color:var(--acc)}
+.tchip .sw{display:block;height:26px;border-radius:6px;margin-bottom:4px}
+.tchip .rec{position:absolute;top:-6px;right:-4px;background:var(--acc);color:#052;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px}
+.mini{display:flex;flex-wrap:wrap;margin:2px 0 6px}
+.mini button{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:5px 10px;font-size:12px;margin:0 6px 6px 0;color:var(--mute)}
+.mini button.on{border-color:var(--acc);color:var(--ink)}
+.sum{background:var(--panel);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.55;margin-bottom:8px}
+.sum div+div{margin-top:6px}
+.sum b{display:block;font-size:12px;color:var(--mute);font-weight:600}
+.rbtns{display:flex;padding:8px 12px calc(env(safe-area-inset-bottom) + 12px)}
+.rbtns button{flex:1;border-radius:14px;padding:13px 6px;font-size:15px;font-weight:700;border:1px solid var(--line);background:var(--panel)}
+.rbtns button+button{margin-left:8px}
+.rbtns .pri{background:var(--acc);color:#04220f;border-color:var(--acc);flex:1.5}
+/* gallery */
+.ggrid{flex:1;overflow:auto;display:flex;flex-wrap:wrap;align-content:flex-start;padding:2px}
+.tile{position:relative;width:33.333%;padding-top:33.333%;border:2px solid var(--bg);background:#222}
+.tile img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+.tile .badge{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.3);display:none;font-size:12px;font-weight:700;align-items:center;justify-content:center}
+.sel .tile .badge{display:flex}
+.tile.picked .badge{background:var(--acc);color:#04220f;border-color:var(--acc)}
+.tile .sc{position:absolute;left:4px;bottom:4px;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(0,0,0,.6)}
+.empty{width:100%;text-align:center;color:var(--mute);padding:60px 20px;line-height:1.8}
+.selbar{display:none;padding:8px 12px calc(env(safe-area-inset-bottom) + 10px);border-top:1px solid var(--line)}
+.sel .selbar{display:flex}
+.selbar button{flex:1;border-radius:12px;padding:11px;border:1px solid var(--line);background:var(--panel);font-size:14px}
+.selbar button+button{margin-left:8px}
+.selbar .danger{background:#3a1715;border-color:#6b2a25;color:#ffb3ac}
+/* viewer */
+.vstage{flex:1;min-height:0;position:relative;overflow:hidden;touch-action:pan-y}
+.vstage img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain}
+.vinfo{padding:6px 14px;font-size:12px;color:var(--mute);line-height:1.5;max-height:22%;overflow:auto}
+.vinfo b{color:var(--ink)}
+.vbar{display:flex;padding:6px 6px calc(env(safe-area-inset-bottom) + 10px);border-top:1px solid var(--line)}
+.vbar button{flex:1;background:none;border:none;padding:6px 2px;font-size:11px;color:var(--mute)}
+.vbar button i{display:block;font-style:normal;font-size:20px;margin-bottom:2px}
+.vbar button:disabled{opacity:.35}
+/* sheet + toast */
+.scrim{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:85%;background:#171a1c;border-radius:18px 18px 0 0;transform:translateY(105%);transition:transform .25s;z-index:45;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
+.sheet.open{transform:translateY(0)}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:#555;margin:10px auto 0;flex:none}
+.sheet h3{margin:0;padding:10px 18px 6px;font-size:16px;flex:none}
+#sBody{overflow:auto;padding:0 14px 18px}
+.opt{display:flex;align-items:center;width:100%;text-align:left;background:var(--panel);border:2px solid transparent;border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.opt.on{border-color:var(--acc)}
+.opt .ic{font-size:24px;width:40px;flex:none}
+.opt .sw{width:34px;height:34px;border-radius:8px;margin-right:10px;flex:none}
+.opt b{display:block;font-size:14px}
+.opt span{font-size:12px;color:var(--mute)}
+.row{display:flex;align-items:center;justify-content:space-between;padding:12px 2px;border-bottom:1px solid var(--line);font-size:14px}
+.row input[type=checkbox]{width:22px;height:22px;accent-color:var(--acc)}
+.row select{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px}
+.txtin{width:100%;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;font-size:14px;margin:6px 0}
+.big{display:block;width:100%;border-radius:12px;padding:12px;font-size:15px;font-weight:600;border:1px solid var(--line);background:var(--panel);margin-top:8px}
+.big.pri{background:var(--acc);color:#04220f;border-color:var(--acc)}
+.note{font-size:12px;color:var(--mute);line-height:1.6;padding:8px 2px}
+.ai{font-size:14px;line-height:1.7;white-space:pre-wrap;user-select:text;-webkit-user-select:text}
+.toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);background:rgba(20,22,24,.95);border:1px solid var(--line);padding:9px 16px;border-radius:18px;font-size:13px;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
+.toast.show{opacity:1}
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+<div id="app">
+ <div class="top">
+  <button id="bScene" class="chip">🤖 อัตโนมัติ</button>
+  <button id="bTone" class="chip">🎨 โทนออโต้</button>
+  <span class="sp"></span>
+  <button id="bSet" class="iconbtn" aria-label="ตั้งค่า">⚙️</button>
+ </div>
+ <div class="vf-wrap" id="wrap">
+  <div id="vf" class="vf">
+   <video id="video" playsinline muted autoplay></video>
+   <canvas id="live"></canvas>
+   <canvas id="ov"></canvas>
+   <div id="coach" class="coach">กำลังเปิดกล้อง…</div>
+   <div id="msg" class="msg"></div>
+   <div id="flash" class="flash"></div>
+  </div>
+ </div>
+ <div id="why" class="why"></div>
+ <div class="bottom">
+  <button id="thumb" class="thumb" aria-label="อัลบั้ม"></button>
+  <div class="shwrap"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="46"/><circle id="arc" cx="50" cy="50" r="46"/></svg><button id="shutter" class="shutter" aria-label="ถ่าย"><span id="score">–</span><small>คะแนน</small></button></div>
+  <button id="bImport" class="imp">🖼️<small>นำเข้า</small></button>
+ </div>
+ <button id="bAuto" class="autosw">⏱ ถ่ายอัตโนมัติ: ปิด</button>
+</div>
+
+<div id="res" class="screen">
+ <div class="hdr"><button id="rClose" class="x">✕</button><b id="rTitle">แต่งให้แล้ว ✨</b><button id="rScene" class="txtbtn"></button></div>
+ <div id="rStage" class="stage"><canvas id="rCv"></canvas><div id="rHandle" class="handle"></div><span class="tag l">ก่อน</span><span class="tag r">หลัง</span><div id="rBusy" class="busy">กำลังแต่งรูป…</div></div>
+ <div class="rbody">
+  <div id="rScore" class="scoreline"></div>
+  <div id="rTones" class="chips"></div>
+  <div id="rFix" class="mini"></div>
+  <div id="rSum" class="sum"></div>
+ </div>
+ <div class="rbtns"><button id="rOrig">เก็บต้นฉบับ</button><button id="rSave" class="pri">💾 เก็บรูปแต่ง</button></div>
+</div>
+
+<div id="gal" class="screen">
+ <div class="hdr"><button id="gClose" class="x">✕</button><b>อัลบั้ม <span id="gCount" style="color:var(--mute);font-weight:400"></span></b><button id="gSel" class="txtbtn">เลือก</button></div>
+ <div id="grid" class="ggrid"></div>
+ <div class="selbar"><button id="selAll">เลือกทั้งหมด</button><button id="selDel" class="danger">🗑️ ลบ (0)</button></div>
+</div>
+
+<div id="view" class="screen">
+ <div class="hdr"><button id="vClose" class="x">✕</button><b id="vTitle"></b><button id="vOrig" class="txtbtn">กดค้างดูต้นฉบับ</button></div>
+ <div id="vStage" class="vstage"><img id="vImg" alt="" draggable="false"></div>
+ <div id="vInfo" class="vinfo"></div>
+ <div class="vbar">
+  <button id="vShare"><i>📤</i>แชร์</button>
+  <button id="vSave"><i>⬇️</i>ดาวน์โหลด</button>
+  <button id="vEdit"><i>✨</i>แต่งใหม่</button>
+  <button id="vAI"><i>🤖</i>ถาม AI</button>
+  <button id="vDel"><i>🗑️</i>ลบ</button>
+ </div>
+</div>
+
+<div id="scrim" class="scrim"></div>
+<div id="sheet" class="sheet"><div class="grab"></div><h3 id="sTitle"></h3><div id="sBody"></div></div>
+<div id="toast" class="toast"></div>
+<input type="file" id="fileIn" accept="image/*" multiple>
+<input type="file" id="camIn" accept="image/*" capture="environment">
+<input type="file" id="zipIn" accept=".zip,application/zip">
+<script src="engine.js"></script>
+<script src="coach.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
